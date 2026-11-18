@@ -1,0 +1,40 @@
+{
+  "description": "KPI summary — not a Vega-Lite spec. Structured data used by index.html KPI cards.",
+  "reporting_dates": ["2026-09-01", "2026-10-01"],
+  "kpis": {
+    "2026-09-01": {
+      "total_portfolio_kzt_bn": 498.15,
+      "par30_pct": 12.05,
+      "par90_pct": 6.24,
+      "npl_pct": 11.85,
+      "provisions_kzt_bn": 32.74,
+      "top10_concentration_pct": 17.04,
+      "loan_count": 1975,
+      "written_off_excluded": 25
+    },
+    "2026-10-01": {
+      "total_portfolio_kzt_bn": 484.67,
+      "par30_pct": 10.33,
+      "par90_pct": 4.46,
+      "npl_pct": 10.01,
+      "provisions_kzt_bn": 27.27,
+      "top10_concentration_pct": 17.02,
+      "loan_count": 1992,
+      "written_off_excluded": 8
+    }
+  },
+  "monthly_changes": {
+    "portfolio_change_kzt_bn": -13.48,
+    "portfolio_change_pct": -2.71,
+    "par30_change_pp": -1.72,
+    "par90_change_pp": -1.78,
+    "npl_change_pp": -1.84,
+    "provision_change_kzt_bn": -5.46,
+    "provision_change_pct": -16.69,
+    "top10_concentration_change_pp": -0.03
+  },
+  "fx_rates": {
+    "2026-09-01": {"USD": 478.35},
+    "2026-10-01": {"USD": 482.10}
+  }
+}

@@ -1,0 +1,230 @@
+# ============================================================
+# portfolio_risk.yml
+# Credit Portfolio Risk Analytics — Semantic Model
+#
+# This model sits on top of reporting.v_portfolio_active.
+# Grain: one row per (report_date, loan_id) — a single loan
+#        snapshot for a specific reporting date.
+#
+# IMPORTANT aggregation rules:
+#   - Do NOT SUM pre-calculated ratios (par30_pct, npl_pct).
+#     Instead, compute ratios from component measures.
+#   - outstanding_kzt should be summed; then divide to get %.
+# ============================================================
+
+model:
+  name: portfolio_risk
+  label: "Credit Portfolio Risk"
+  description: >
+    Loan-level portfolio risk analytics for the credit portfolio.
+    Covers two reporting dates: 2026-09-01 and 2026-10-01.
+    All monetary amounts are in KZT.
+  source: reporting.v_portfolio_active
+  grain: "One row per (report_date, loan_id)"
+  version: "1.0"
+  updated: "2026-11-19"
+
+
+# ── Dimensions ──────────────────────────────────────────────
+dimensions:
+  - name: report_date
+    column: report_date
+    type: date
+    label: "Reporting Date"
+    description: "Portfolio snapshot date (2026-09-01 or 2026-10-01)."
+
+  - name: loan_id
+    column: loan_id
+    type: string
+    label: "Loan ID"
+    description: "Unique loan identifier."
+
+  - name: borrower_id
+    column: borrower_id
+    type: string
+    label: "Borrower ID"
+    description: "Unique borrower identifier."
+
+  - name: group_id
+    column: group_id
+    type: string
+    label: "Borrower Group ID"
+    description: "Borrower group identifier. Used for concentration analysis."
+
+  - name: sector
+    column: sector
+    type: string
+    label: "Industry Sector"
+    description: "Economic sector of the borrower (Russian-language labels)."
+    values:
+      - Промышленность     # Manufacturing / Industry
+      - Строительство      # Construction
+      - Транспорт          # Transport
+      - АПК                # Agriculture
+      - Торговля           # Trade / Commerce
+      - Услуги             # Services
+
+  - name: program
+    column: program
+    type: string
+    label: "Credit Program"
+    description: "Lending program classification."
+    values:
+      - Лизинг техники                # Equipment leasing
+      - Экспортное финансирование     # Export financing
+      - Инвестиционное кредитование   # Investment lending
+      - Пополнение оборотных средств  # Working capital replenishment
+
+  - name: currency
+    column: currency
+    type: string
+    label: "Original Currency"
+    description: "Currency of the loan as issued (KZT or USD). All balances are converted to KZT for aggregation."
+
+  - name: is_npl
+    column: is_npl
+    type: boolean
+    label: "NPL Flag"
+    description: "1 if the loan is non-performing (DPD > 90 or restructured)."
+
+  - name: is_par30
+    column: is_par30
+    type: boolean
+    label: "PAR30 Flag"
+    description: "1 if the loan has DPD > 30."
+
+  - name: is_par90
+    column: is_par90
+    type: boolean
+    label: "PAR90 Flag"
+    description: "1 if the loan has DPD > 90."
+
+  - name: restructured
+    column: restructured
+    type: boolean
+    label: "Restructured Flag"
+    description: "1 if the loan has been restructured."
+
+  - name: days_past_due
+    column: days_past_due
+    type: integer
+    label: "Days Past Due"
+    description: "Number of calendar days the loan is overdue."
+
+
+# ── Measures ────────────────────────────────────────────────
+measures:
+  - name: loan_count
+    column: loan_id
+    type: count_distinct
+    label: "Number of Loans"
+    description: "Count of distinct active loans."
+
+  - name: outstanding_kzt
+    column: outstanding_kzt
+    type: sum
+    format: "currency_kzt"
+    label: "Outstanding Balance (KZT)"
+    description: >
+      Sum of outstanding principal converted to KZT.
+      Use this as the denominator for ratio calculations.
+
+  - name: par30_balance_kzt
+    expression: "SUM(CASE WHEN is_par30 = 1 THEN outstanding_kzt ELSE 0 END)"
+    type: custom
+    format: "currency_kzt"
+    label: "PAR30 Balance (KZT)"
+    description: "Sum of outstanding balance for loans with DPD > 30."
+
+  - name: par90_balance_kzt
+    expression: "SUM(CASE WHEN is_par90 = 1 THEN outstanding_kzt ELSE 0 END)"
+    type: custom
+    format: "currency_kzt"
+    label: "PAR90 Balance (KZT)"
+    description: "Sum of outstanding balance for loans with DPD > 90."
+
+  - name: npl_balance_kzt
+    expression: "SUM(CASE WHEN is_npl = 1 THEN outstanding_kzt ELSE 0 END)"
+    type: custom
+    format: "currency_kzt"
+    label: "NPL Balance (KZT)"
+    description: "Sum of outstanding balance for NPL loans (DPD > 90 or restructured)."
+
+  - name: provision_kzt
+    column: provision_kzt
+    type: sum
+    format: "currency_kzt"
+    label: "Provisions (KZT)"
+    description: >
+      Sum of loan-level provision amounts.
+      Rates: 1% (DPD 1–30), 10% (DPD 31–90), 50% (NPL).
+      NPL classification takes priority over DPD-based buckets.
+
+  # ── Derived ratio measures ─────────────────────────────
+  # These are defined as expressions; BI tools must compute
+  # them as aggregate(numerator) / aggregate(denominator).
+  # Never sum pre-calculated ratio columns directly.
+
+  - name: par30_ratio
+    expression: "SUM(CASE WHEN is_par30 = 1 THEN outstanding_kzt ELSE 0 END) / NULLIF(SUM(outstanding_kzt), 0) * 100"
+    type: custom
+    format: "percent"
+    label: "PAR30 (%)"
+    description: "PAR30 ratio: balance of loans with DPD > 30 as % of total portfolio."
+
+  - name: par90_ratio
+    expression: "SUM(CASE WHEN is_par90 = 1 THEN outstanding_kzt ELSE 0 END) / NULLIF(SUM(outstanding_kzt), 0) * 100"
+    type: custom
+    format: "percent"
+    label: "PAR90 (%)"
+    description: "PAR90 ratio: balance of loans with DPD > 90 as % of total portfolio."
+
+  - name: npl_ratio
+    expression: "SUM(CASE WHEN is_npl = 1 THEN outstanding_kzt ELSE 0 END) / NULLIF(SUM(outstanding_kzt), 0) * 100"
+    type: custom
+    format: "percent"
+    label: "NPL (%)"
+    description: "NPL ratio: balance of NPL loans (DPD > 90 or restructured) as % of total portfolio."
+
+
+# ── Formats ─────────────────────────────────────────────────
+formats:
+  currency_kzt:
+    type: currency
+    symbol: "₸"
+    suffix: " KZT"
+    decimal_places: 2
+    thousands_separator: ","
+
+  percent:
+    type: number
+    suffix: "%"
+    decimal_places: 2
+
+
+# ── Pre-defined aggregations ─────────────────────────────────
+# These correspond directly to reporting views.
+views:
+  - name: portfolio_metrics
+    description: "Headline KPIs per reporting date."
+    source: reporting.v_portfolio_metrics
+    dimensions: [report_date]
+    measures: [total_kzt_bn, par30_pct, par90_pct, npl_pct, provision_kzt_bn, top10_concentration_pct]
+
+  - name: by_industry
+    description: "Portfolio distribution by industry sector."
+    source: reporting.v_portfolio_by_industry
+    dimensions: [report_date, sector]
+    measures: [loan_count, total_kzt, par30_kzt, par90_kzt, npl_kzt, provision_kzt]
+
+  - name: by_program
+    description: "Portfolio distribution by lending program."
+    source: reporting.v_portfolio_by_program
+    dimensions: [report_date, program]
+    measures: [loan_count, total_kzt, par30_kzt, par90_kzt, npl_kzt, provision_kzt]
+
+  - name: borrower_groups
+    description: "Top borrower group concentration."
+    source: reporting.v_top_borrower_groups
+    dimensions: [report_date, group_id, rank_by_balance, is_top10]
+    measures: [loan_count, total_kzt]

@@ -1,0 +1,101 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+  "description": "Portfolio balance and risk metrics by lending program. All values computed from actual data.",
+  "config": {
+    "font": "Inter, Arial, sans-serif",
+    "background": "#ffffff",
+    "view": {"stroke": "transparent"},
+    "axis": {"labelColor": "#374151", "titleColor": "#6b7280", "gridColor": "#e5e7eb"}
+  },
+  "data": {
+    "values": [
+      {"program": "Лизинг техники",               "date": "Sep 1",  "balance": 147.75, "par30_pct": 10.26, "npl_pct": 11.00},
+      {"program": "Экспортное финансирование",     "date": "Sep 1",  "balance": 122.02, "par30_pct": 11.70, "npl_pct": 12.62},
+      {"program": "Инвестиционное кредитование",   "date": "Sep 1",  "balance": 120.90, "par30_pct": 13.76, "npl_pct": 12.29},
+      {"program": "Пополнение оборотных средств",  "date": "Sep 1",  "balance": 107.48, "par30_pct": 12.98, "npl_pct": 11.65},
+      {"program": "Лизинг техники",               "date": "Oct 1",  "balance": 143.89, "par30_pct": 11.78, "npl_pct":  6.80},
+      {"program": "Экспортное финансирование",     "date": "Oct 1",  "balance": 119.24, "par30_pct":  9.16, "npl_pct": 12.14},
+      {"program": "Инвестиционное кредитование",   "date": "Oct 1",  "balance": 116.59, "par30_pct": 11.46, "npl_pct": 10.68},
+      {"program": "Пополнение оборотных средств",  "date": "Oct 1",  "balance": 104.96, "par30_pct":  8.41, "npl_pct": 11.26}
+    ]
+  },
+  "vconcat": [
+    {
+      "title": {"text": "Portfolio Balance by Program (KZT Billion)", "fontSize": 13, "fontWeight": "bold", "color": "#111827", "anchor": "start"},
+      "mark": {"type": "bar", "cornerRadiusTopLeft": 3, "cornerRadiusTopRight": 3},
+      "encoding": {
+        "x": {
+          "field": "program",
+          "type": "ordinal",
+          "axis": {"labelAngle": -15, "title": null, "labelLimit": 200},
+          "sort": null
+        },
+        "xOffset": {"field": "date", "type": "nominal", "sort": ["Sep 1", "Oct 1"]},
+        "y": {
+          "field": "balance",
+          "type": "quantitative",
+          "axis": {"title": "KZT Billion"}
+        },
+        "color": {
+          "field": "date",
+          "type": "nominal",
+          "scale": {"domain": ["Sep 1", "Oct 1"], "range": ["#1d4ed8", "#93c5fd"]},
+          "legend": {"title": "Date"}
+        },
+        "tooltip": [
+          {"field": "program", "type": "nominal",      "title": "Program"},
+          {"field": "date",    "type": "nominal",      "title": "Date"},
+          {"field": "balance", "type": "quantitative", "title": "Balance (B KZT)", "format": ".2f"}
+        ]
+      },
+      "width": 500,
+      "height": 150
+    },
+    {
+      "title": {"text": "PAR30 & NPL Ratio by Program (%)", "fontSize": 13, "fontWeight": "bold", "color": "#111827", "anchor": "start"},
+      "transform": [
+        {"fold": ["par30_pct", "npl_pct"], "as": ["metric", "ratio"]}
+      ],
+      "mark": {"type": "point", "filled": true, "size": 80},
+      "encoding": {
+        "x": {
+          "field": "program",
+          "type": "ordinal",
+          "axis": {"labelAngle": -15, "title": null, "labelLimit": 200},
+          "sort": null
+        },
+        "y": {
+          "field": "ratio",
+          "type": "quantitative",
+          "axis": {"title": "Percent (%)"}
+        },
+        "color": {
+          "field": "metric",
+          "type": "nominal",
+          "scale": {
+            "domain": ["par30_pct", "npl_pct"],
+            "range": ["#f59e0b", "#7c3aed"]
+          },
+          "legend": {
+            "title": "Metric",
+            "labelExpr": "datum.value === 'par30_pct' ? 'PAR30' : 'NPL'"
+          }
+        },
+        "shape": {
+          "field": "date",
+          "type": "nominal",
+          "scale": {"range": ["circle", "square"]},
+          "legend": {"title": "Date"}
+        },
+        "tooltip": [
+          {"field": "program", "type": "nominal",      "title": "Program"},
+          {"field": "date",    "type": "nominal",      "title": "Date"},
+          {"field": "metric",  "type": "nominal",      "title": "Metric",     "labelExpr": "datum.value === 'par30_pct' ? 'PAR30' : 'NPL'"},
+          {"field": "ratio",   "type": "quantitative", "title": "Ratio (%)",  "format": ".2f"}
+        ]
+      },
+      "width": 500,
+      "height": 130
+    }
+  ]
+}

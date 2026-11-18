@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Credit Portfolio Risk Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/vega@5"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vega-lite@5"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
+  <style>
+    /* ── Reset & base ─────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+      background: #f1f5f9;
+      color: #111827;
+      font-size: 14px;
+    }
+
+    /* ── Top bar ──────────────────────────────────────────────────── */
+    header {
+      background: #1e3a5f;
+      color: #fff;
+      padding: 16px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 3px solid #f59e0b;
+    }
+    header .brand { font-size: 11px; color: #93c5fd; letter-spacing: 0.08em; text-transform: uppercase; }
+    header h1 { font-size: 18px; font-weight: 700; margin-top: 2px; }
+    header .meta { text-align: right; font-size: 11px; color: #93c5fd; }
+    header .meta strong { color: #fff; font-size: 13px; display: block; }
+
+    /* ── Layout ───────────────────────────────────────────────────── */
+    main { max-width: 1280px; margin: 0 auto; padding: 20px 24px 40px; }
+    .section { margin-bottom: 28px; }
+    .section-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #374151;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      border-left: 3px solid #1d4ed8;
+      padding-left: 10px;
+      margin-bottom: 14px;
+    }
+
+    /* ── KPI Cards ────────────────────────────────────────────────── */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 12px;
+    }
+    @media (max-width: 1100px) { .kpi-grid { grid-template-columns: repeat(3, 1fr); } }
+    @media (max-width: 700px)  { .kpi-grid { grid-template-columns: repeat(2, 1fr); } }
+
+    .kpi-card {
+      background: #fff;
+      border-radius: 8px;
+      padding: 16px 14px 14px;
+      border: 1px solid #e5e7eb;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+      position: relative;
+    }
+    .kpi-card .kpi-label {
+      font-size: 10px;
+      color: #6b7280;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+    .kpi-card .kpi-value {
+      font-size: 22px;
+      font-weight: 700;
+      color: #111827;
+      line-height: 1;
+    }
+    .kpi-card .kpi-sub {
+      font-size: 11px;
+      color: #6b7280;
+      margin-top: 4px;
+    }
+    .kpi-card .kpi-change {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 6px;
+      border-radius: 4px;
+      margin-top: 6px;
+    }
+    .kpi-card .kpi-change.down { background: #dcfce7; color: #15803d; }
+    .kpi-card .kpi-change.up   { background: #fee2e2; color: #b91c1c; }
+    .kpi-card .kpi-change.neutral { background: #f3f4f6; color: #6b7280; }
+
+    .kpi-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 3px;
+      border-radius: 8px 8px 0 0;
+    }
+    .kpi-card.blue::before   { background: #1d4ed8; }
+    .kpi-card.amber::before  { background: #f59e0b; }
+    .kpi-card.red::before    { background: #ef4444; }
+    .kpi-card.purple::before { background: #7c3aed; }
+    .kpi-card.teal::before   { background: #0d9488; }
+    .kpi-card.orange::before { background: #ea580c; }
+
+    /* ── Chart panels ─────────────────────────────────────────────── */
+    .charts-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    @media (max-width: 900px) { .charts-row { grid-template-columns: 1fr; } }
+
+    .chart-panel {
+      background: #fff;
+      border-radius: 8px;
+      border: 1px solid #e5e7eb;
+      padding: 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+    .chart-panel h3 {
+      font-size: 12px;
+      font-weight: 700;
+      color: #374151;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #f3f4f6;
+    }
+    .chart-panel-wide {
+      background: #fff;
+      border-radius: 8px;
+      border: 1px solid #e5e7eb;
+      padding: 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+    .chart-panel-wide h3 {
+      font-size: 12px;
+      font-weight: 700;
+      color: #374151;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #f3f4f6;
+    }
+
+    .vega-actions { display: none !important; }
+
+    /* ── Comparison table ─────────────────────────────────────────── */
+    .summary-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    .summary-table thead tr {
+      background: #1e3a5f;
+      color: #fff;
+    }
+    .summary-table th {
+      padding: 9px 14px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    .summary-table th:not(:first-child) { text-align: right; }
+    .summary-table tbody tr { border-bottom: 1px solid #f3f4f6; }
+    .summary-table tbody tr:hover { background: #f8fafc; }
+    .summary-table td { padding: 9px 14px; }
+    .summary-table td:not(:first-child) { text-align: right; font-variant-numeric: tabular-nums; }
+    .summary-table td.metric-label { font-weight: 600; color: #374151; }
+    .summary-table td.change-down { color: #15803d; font-weight: 600; }
+    .summary-table td.change-up   { color: #b91c1c; font-weight: 600; }
+
+    /* ── Footnote ─────────────────────────────────────────────────── */
+    footer {
+      text-align: center;
+      font-size: 10px;
+      color: #9ca3af;
+      padding: 16px;
+      border-top: 1px solid #e5e7eb;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="brand">Internal Risk Monitoring System</div>
+    <h1>Credit Portfolio Risk Dashboard</h1>
+  </div>
+  <div class="meta">
+    <strong>As of October 1, 2026</strong>
+    Reporting currency: KZT &nbsp;|&nbsp; Comparison base: September 1, 2026
+  </div>
+</header>
+
+<main>
+
+  <!-- ── Section 1: KPI Cards ──────────────────────────────────── -->
+  <div class="section">
+    <div class="section-title">Section 1 — Executive KPIs (October 1, 2026)</div>
+    <div class="kpi-grid">
+
+      <div class="kpi-card blue">
+        <div class="kpi-label">Total Portfolio</div>
+        <div class="kpi-value">484.67</div>
+        <div class="kpi-sub">KZT Billion</div>
+        <div class="kpi-change down">▼ −13.48 B (−2.71%)</div>
+      </div>
+
+      <div class="kpi-card amber">
+        <div class="kpi-label">PAR30</div>
+        <div class="kpi-value">10.33%</div>
+        <div class="kpi-sub">DPD &gt; 30 days</div>
+        <div class="kpi-change down">▼ −1.72 pp</div>
+      </div>
+
+      <div class="kpi-card red">
+        <div class="kpi-label">PAR90</div>
+        <div class="kpi-value">4.46%</div>
+        <div class="kpi-sub">DPD &gt; 90 days</div>
+        <div class="kpi-change down">▼ −1.78 pp</div>
+      </div>
+
+      <div class="kpi-card purple">
+        <div class="kpi-label">NPL Ratio</div>
+        <div class="kpi-value">10.01%</div>
+        <div class="kpi-sub">DPD &gt; 90 or Restructured</div>
+        <div class="kpi-change down">▼ −1.84 pp</div>
+      </div>
+
+      <div class="kpi-card teal">
+        <div class="kpi-label">Provisions</div>
+        <div class="kpi-value">27.27</div>
+        <div class="kpi-sub">KZT Billion</div>
+        <div class="kpi-change down">▼ −5.46 B (−16.69%)</div>
+      </div>
+
+      <div class="kpi-card orange">
+        <div class="kpi-label">Top-10 Concentration</div>
+        <div class="kpi-value">17.02%</div>
+        <div class="kpi-sub">Top 10 borrower groups</div>
+        <div class="kpi-change neutral">▼ −0.03 pp</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── Section 2: Portfolio Dynamics ─────────────────────────── -->
+  <div class="section">
+    <div class="section-title">Section 2 — Portfolio Dynamics</div>
+    <div class="charts-row">
+      <div class="chart-panel">
+        <h3>Balance &amp; Risk Ratios — Sep 1 vs Oct 1, 2026</h3>
+        <div id="chart-dynamics"></div>
+      </div>
+      <div class="chart-panel">
+        <h3>Month-over-Month Summary</h3>
+        <table class="summary-table">
+          <thead>
+            <tr>
+              <th>Metric</th>
+              <th>Sep 1, 2026</th>
+              <th>Oct 1, 2026</th>
+              <th>Change</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="metric-label">Portfolio (₸ B)</td>
+              <td>498.15</td>
+              <td>484.67</td>
+              <td class="change-down">−13.48 B</td>
+            </tr>
+            <tr>
+              <td class="metric-label">Portfolio change</td>
+              <td>—</td>
+              <td>—</td>
+              <td class="change-down">−2.71%</td>
+            </tr>
+            <tr>
+              <td class="metric-label">PAR30 (%)</td>
+              <td>12.05</td>
+              <td>10.33</td>
+              <td class="change-down">−1.72 pp</td>
+            </tr>
+            <tr>
+              <td class="metric-label">PAR90 (%)</td>
+              <td>6.24</td>
+              <td>4.46</td>
+              <td class="change-down">−1.78 pp</td>
+            </tr>
+            <tr>
+              <td class="metric-label">NPL (%)</td>
+              <td>11.85</td>
+              <td>10.01</td>
+              <td class="change-down">−1.84 pp</td>
+            </tr>
+            <tr>
+              <td class="metric-label">Provisions (₸ B)</td>
+              <td>32.74</td>
+              <td>27.27</td>
+              <td class="change-down">−5.46 B</td>
+            </tr>
+            <tr>
+              <td class="metric-label">Top-10 Conc. (%)</td>
+              <td>17.04</td>
+              <td>17.02</td>
+              <td class="change-down">−0.03 pp</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Section 3: Industry Analysis ──────────────────────────── -->
+  <div class="section">
+    <div class="section-title">Section 3 — Industry Analysis</div>
+    <div class="chart-panel-wide">
+      <h3>Portfolio Balance by Industry Sector — Sep 1 vs Oct 1, 2026</h3>
+      <div id="chart-industry"></div>
+    </div>
+  </div>
+
+  <!-- ── Section 4: Program Analysis ───────────────────────────── -->
+  <div class="section">
+    <div class="section-title">Section 4 — Program Analysis</div>
+    <div class="chart-panel-wide">
+      <h3>Portfolio Balance &amp; Risk Ratios by Lending Program</h3>
+      <div id="chart-program"></div>
+    </div>
+  </div>
+
+  <!-- ── Section 5: Borrower Concentration ─────────────────────── -->
+  <div class="section">
+    <div class="section-title">Section 5 — Top-10 Borrower Group Concentration</div>
+    <div class="chart-panel-wide">
+      <h3>Largest Borrower Groups by Outstanding Balance (KZT Billion)</h3>
+      <div id="chart-concentration"></div>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  Credit Portfolio Risk Dashboard &nbsp;|&nbsp; Data as of Oct 1, 2026 &nbsp;|&nbsp;
+  All amounts in KZT. FX conversion: USD/KZT 478.35 (Sep 1) &nbsp;/&nbsp; 482.10 (Oct 1).
+  Written-off loans excluded. 60 source-level duplicate records deduplicated.
+</footer>
+
+<script>
+// ── Vega-Lite specifications (inline) ────────────────────────────────────────
+
+const DYNAMICS_SPEC = {
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+  "config": {
+    "font": "Inter, Arial, sans-serif",
+    "background": "#ffffff",
+    "view": {"stroke": "transparent"},
+    "axis": {"labelColor": "#374151", "titleColor": "#6b7280", "gridColor": "#f3f4f6", "domainColor": "#e5e7eb"}
+  },
+  "vconcat": [
+    {
+      "title": {"text": "Total Portfolio (KZT Billion)", "fontSize": 11, "color": "#374151", "anchor": "start"},
+      "data": {"values": [
+        {"date": "Sep 1, 2026", "value": 498.15},
+        {"date": "Oct 1, 2026", "value": 484.67}
+      ]},
+      "mark": {"type": "bar", "cornerRadiusTopLeft": 4, "cornerRadiusTopRight": 4, "width": 50},
+      "encoding": {
+        "x": {"field": "date", "type": "ordinal", "axis": {"labelAngle": 0, "title": null}, "sort": null},
+        "y": {"field": "value", "type": "quantitative", "axis": {"title": "₸ Billion"}, "scale": {"domain": [470, 510]}},
+        "color": {"field": "date", "type": "nominal", "scale": {"range": ["#1d4ed8", "#93c5fd"]}, "legend": null},
+        "tooltip": [
+          {"field": "date", "type": "nominal", "title": "Date"},
+          {"field": "value", "type": "quantitative", "title": "Portfolio (B KZT)", "format": ".2f"}
+        ]
+      },
+      "width": 200, "height": 110
+    },
+    {
+      "title": {"text": "Risk Ratios: PAR30 / PAR90 / NPL (%)", "fontSize": 11, "color": "#374151", "anchor": "start"},
+      "data": {"values": [
+        {"date": "Sep 1, 2026", "metric": "PAR30", "value": 12.05},
+        {"date": "Sep 1, 2026", "metric": "PAR90", "value": 6.24},
+        {"date": "Sep 1, 2026", "metric": "NPL",   "value": 11.85},
+        {"date": "Oct 1, 2026", "metric": "PAR30", "value": 10.33},
+        {"date": "Oct 1, 2026", "metric": "PAR90", "value": 4.46},
+        {"date": "Oct 1, 2026", "metric": "NPL",   "value": 10.01}
+      ]},
+      "mark": {"type": "bar", "cornerRadiusTopLeft": 3, "cornerRadiusTopRight": 3},
+      "encoding": {
+        "x": {"field": "date", "type": "ordinal", "axis": {"labelAngle": 0, "title": null}, "sort": null},
+        "xOffset": {"field": "metric", "type": "nominal", "sort": ["PAR30", "PAR90", "NPL"]},
+        "y": {"field": "value", "type": "quantitative", "axis": {"title": "Percent (%)"}},
+        "color": {
+          "field": "metric", "type": "nominal",
+          "scale": {"domain": ["PAR30", "PAR90", "NPL"], "range": ["#f59e0b", "#ef4444", "#7c3aed"]},
+          "legend": {"title": "Metric", "orient": "right"}
+        },
+        "tooltip": [
+          {"field": "date",   "type": "nominal",      "title": "Date"},
+          {"field": "metric", "type": "nominal",      "title": "Metric"},
+          {"field": "value",  "type": "quantitative", "title": "Value (%)", "format": ".2f"}
+        ]
+      },
+      "width": 200, "height": 130
+    }
+  ]
+};
+
+const INDUSTRY_SPEC = {
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+  "config": {
+    "font": "Inter, Arial, sans-serif",
+    "background": "#ffffff",
+    "view": {"stroke": "transparent"},
+    "axis": {"labelColor": "#374151", "titleColor": "#6b7280", "gridColor": "#f3f4f6"}
+  },
+  "data": {"values": [
+    {"sector": "Промышленность", "date": "Sep 1",  "balance": 107.41, "pct": 21.56},
+    {"sector": "Строительство",  "date": "Sep 1",  "balance": 85.09,  "pct": 17.08},
+    {"sector": "Транспорт",      "date": "Sep 1",  "balance": 84.78,  "pct": 17.02},
+    {"sector": "АПК",            "date": "Sep 1",  "balance": 77.21,  "pct": 15.50},
+    {"sector": "Торговля",       "date": "Sep 1",  "balance": 73.11,  "pct": 14.68},
+    {"sector": "Услуги",         "date": "Sep 1",  "balance": 70.56,  "pct": 14.16},
+    {"sector": "Промышленность", "date": "Oct 1",  "balance": 103.59, "pct": 21.37},
+    {"sector": "Строительство",  "date": "Oct 1",  "balance": 82.46,  "pct": 17.01},
+    {"sector": "Транспорт",      "date": "Oct 1",  "balance": 84.80,  "pct": 17.50},
+    {"sector": "АПК",            "date": "Oct 1",  "balance": 74.31,  "pct": 15.33},
+    {"sector": "Торговля",       "date": "Oct 1",  "balance": 71.86,  "pct": 14.83},
+    {"sector": "Услуги",         "date": "Oct 1",  "balance": 67.65,  "pct": 13.96}
+  ]},
+  "mark": {"type": "bar", "cornerRadiusTopLeft": 3, "cornerRadiusTopRight": 3},
+  "encoding": {
+    "x": {"field": "sector", "type": "ordinal", "axis": {"title": null, "labelAngle": -15, "labelFontSize": 11}, "sort": null},
+    "xOffset": {"field": "date", "type": "nominal", "sort": ["Sep 1", "Oct 1"]},
+    "y": {"field": "balance", "type": "quantitative", "axis": {"title": "KZT Billion"}},
+    "color": {
+      "field": "date", "type": "nominal",
+      "scale": {"domain": ["Sep 1", "Oct 1"], "range": ["#1d4ed8", "#93c5fd"]},
+      "legend": {"title": "Date"}
+    },
+    "tooltip": [
+      {"field": "sector",  "type": "nominal",      "title": "Sector"},
+      {"field": "date",    "type": "nominal",      "title": "Date"},
+      {"field": "balance", "type": "quantitative", "title": "Balance (B KZT)", "format": ".2f"},
+      {"field": "pct",     "type": "quantitative", "title": "Share (%)",       "format": ".2f"}
+    ]
+  },
+  "width": 700, "height": 220
+};
+
+const PROGRAM_SPEC = {
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+  "config": {
+    "font": "Inter, Arial, sans-serif",
+    "background": "#ffffff",
+    "view": {"stroke": "transparent"},
+    "axis": {"labelColor": "#374151", "titleColor": "#6b7280", "gridColor": "#f3f4f6"}
+  },
+  "data": {"values": [
+    {"program": "Лизинг техники",               "date": "Sep 1",  "balance": 147.76},
+    {"program": "Экспортное финансирование",     "date": "Sep 1",  "balance": 122.02},
+    {"program": "Инвестиционное кредитование",   "date": "Sep 1",  "balance": 120.90},
+    {"program": "Пополнение оборотных средств",  "date": "Sep 1",  "balance": 107.48},
+    {"program": "Лизинг техники",               "date": "Oct 1",  "balance": 143.89},
+    {"program": "Экспортное финансирование",     "date": "Oct 1",  "balance": 119.24},
+    {"program": "Инвестиционное кредитование",   "date": "Oct 1",  "balance": 116.59},
+    {"program": "Пополнение оборотных средств",  "date": "Oct 1",  "balance": 104.96}
+  ]},
+  "mark": {"type": "bar", "cornerRadiusTopLeft": 3, "cornerRadiusTopRight": 3},
+  "encoding": {
+    "x": {
+      "field": "program", "type": "ordinal",
+      "axis": {"title": null, "labelAngle": -12, "labelLimit": 220, "labelFontSize": 11},
+      "sort": null
+    },
+    "xOffset": {"field": "date", "type": "nominal", "sort": ["Sep 1", "Oct 1"]},
+    "y": {"field": "balance", "type": "quantitative", "axis": {"title": "KZT Billion"}},
+    "color": {
+      "field": "date", "type": "nominal",
+      "scale": {"domain": ["Sep 1", "Oct 1"], "range": ["#0d9488", "#5eead4"]},
+      "legend": {"title": "Date"}
+    },
+    "tooltip": [
+      {"field": "program", "type": "nominal",      "title": "Program"},
+      {"field": "date",    "type": "nominal",      "title": "Date"},
+      {"field": "balance", "type": "quantitative", "title": "Balance (B KZT)", "format": ".2f"}
+    ]
+  },
+  "width": 650, "height": 200
+};
+
+const CONCENTRATION_SPEC = {
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+  "config": {
+    "font": "Inter, Arial, sans-serif",
+    "background": "#ffffff",
+    "view": {"stroke": "transparent"},
+    "axis": {"labelColor": "#374151", "titleColor": "#6b7280", "gridColor": "#f3f4f6"}
+  },
+  "data": {"values": [
+    {"rank": 1,  "group": "#1  G0004", "sep_bal": 21.64, "oct_bal": 21.04},
+    {"rank": 2,  "group": "#2  G0001", "sep_bal": 16.72, "oct_bal": 16.30},
+    {"rank": 3,  "group": "#3  G0005", "sep_bal": 12.12, "oct_bal": 11.66},
+    {"rank": 4,  "group": "#4  G0003", "sep_bal":  7.78, "oct_bal":  7.41},
+    {"rank": 5,  "group": "#5  G2277", "sep_bal":  5.74, "oct_bal":  5.51},
+    {"rank": 6,  "group": "#6  G2208", "sep_bal":  4.55, "oct_bal":  4.40},
+    {"rank": 7,  "group": "#7  G1995", "sep_bal":  4.50, "oct_bal":  4.29},
+    {"rank": 8,  "group": "#8  G0002", "sep_bal":  4.19, "oct_bal":  4.04},
+    {"rank": 9,  "group": "#9  G1839→G0013", "sep_bal":  3.94, "oct_bal":  4.00},
+    {"rank": 10, "group": "#10 G2002→G1839", "sep_bal":  3.72, "oct_bal":  3.83}
+  ]},
+  "transform": [
+    {"fold": ["sep_bal", "oct_bal"], "as": ["date_key", "balance"]},
+    {
+      "calculate": "datum.date_key === 'sep_bal' ? 'Sep 1, 2026' : 'Oct 1, 2026'",
+      "as": "date"
+    }
+  ],
+  "mark": {"type": "bar", "cornerRadiusTopRight": 3, "cornerRadiusBottomRight": 3},
+  "encoding": {
+    "y": {
+      "field": "group", "type": "ordinal",
+      "sort": {"field": "rank", "order": "ascending"},
+      "axis": {"title": null, "labelFontSize": 11}
+    },
+    "yOffset": {"field": "date", "type": "nominal", "sort": ["Sep 1, 2026", "Oct 1, 2026"]},
+    "x": {"field": "balance", "type": "quantitative", "axis": {"title": "KZT Billion"}},
+    "color": {
+      "field": "date", "type": "nominal",
+      "scale": {"domain": ["Sep 1, 2026", "Oct 1, 2026"], "range": ["#1d4ed8", "#93c5fd"]},
+      "legend": {"title": "Date"}
+    },
+    "tooltip": [
+      {"field": "group",   "type": "nominal",      "title": "Group"},
+      {"field": "date",    "type": "nominal",      "title": "Date"},
+      {"field": "balance", "type": "quantitative", "title": "Balance (B KZT)", "format": ".2f"}
+    ]
+  },
+  "width": 550, "height": 300
+};
+
+// ── Render charts ────────────────────────────────────────────────────────────
+const opts = {
+  actions: false,
+  renderer: "svg",
+  tooltip: {theme: "light"}
+};
+
+vegaEmbed("#chart-dynamics",      DYNAMICS_SPEC,      opts);
+vegaEmbed("#chart-industry",      INDUSTRY_SPEC,      opts);
+vegaEmbed("#chart-program",       PROGRAM_SPEC,       opts);
+vegaEmbed("#chart-concentration", CONCENTRATION_SPEC, opts);
+</script>
+</body>
+</html>

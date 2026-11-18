@@ -1,0 +1,102 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+  "description": "Top-10 borrower group concentration",
+  "config": {
+    "font": "Inter, Arial, sans-serif",
+    "background": "#ffffff",
+    "view": {"stroke": "transparent"},
+    "axis": {"labelColor": "#374151", "titleColor": "#374151", "gridColor": "#e5e7eb"}
+  },
+  "hconcat": [
+    {
+      "title": {"text": "Sep 1, 2026 — Top 10 Borrower Groups", "fontSize": 12, "fontWeight": "bold", "color": "#111827", "anchor": "start"},
+      "data": {
+        "values": [
+          {"rank": 1,  "group": "G0004", "balance": 21.64, "pct": 4.34},
+          {"rank": 2,  "group": "G0001", "balance": 16.72, "pct": 3.36},
+          {"rank": 3,  "group": "G0005", "balance": 12.12, "pct": 2.43},
+          {"rank": 4,  "group": "G0003", "balance": 7.78,  "pct": 1.56},
+          {"rank": 5,  "group": "G2277", "balance": 5.74,  "pct": 1.15},
+          {"rank": 6,  "group": "G2208", "balance": 4.55,  "pct": 0.91},
+          {"rank": 7,  "group": "G1995", "balance": 4.50,  "pct": 0.90},
+          {"rank": 8,  "group": "G0002", "balance": 4.19,  "pct": 0.84},
+          {"rank": 9,  "group": "G1839", "balance": 3.94,  "pct": 0.79},
+          {"rank": 10, "group": "G2002", "balance": 3.72,  "pct": 0.75}
+        ]
+      },
+      "mark": {"type": "bar", "cornerRadiusTopRight": 3, "cornerRadiusBottomRight": 3},
+      "encoding": {
+        "y": {
+          "field": "group",
+          "type": "ordinal",
+          "sort": {"field": "balance", "order": "descending"},
+          "axis": {"title": "Group ID", "labelFontSize": 11}
+        },
+        "x": {
+          "field": "balance",
+          "type": "quantitative",
+          "axis": {"title": "KZT Billion"}
+        },
+        "color": {
+          "field": "rank",
+          "type": "quantitative",
+          "scale": {"scheme": "blues", "reverse": true},
+          "legend": null
+        },
+        "tooltip": [
+          {"field": "rank",    "type": "quantitative", "title": "Rank"},
+          {"field": "group",   "type": "nominal",      "title": "Group"},
+          {"field": "balance", "type": "quantitative", "title": "Balance (B KZT)", "format": ".2f"},
+          {"field": "pct",     "type": "quantitative", "title": "Share (%)",       "format": ".2f"}
+        ]
+      },
+      "width": 260,
+      "height": 220
+    },
+    {
+      "title": {"text": "Oct 1, 2026 — Top 10 Borrower Groups", "fontSize": 12, "fontWeight": "bold", "color": "#111827", "anchor": "start"},
+      "data": {
+        "values": [
+          {"rank": 1,  "group": "G0004", "balance": 21.04, "pct": 4.34},
+          {"rank": 2,  "group": "G0001", "balance": 16.30, "pct": 3.37},
+          {"rank": 3,  "group": "G0005", "balance": 11.66, "pct": 2.41},
+          {"rank": 4,  "group": "G0003", "balance":  7.41, "pct": 1.53},
+          {"rank": 5,  "group": "G2277", "balance":  5.51, "pct": 1.14},
+          {"rank": 6,  "group": "G2208", "balance":  4.40, "pct": 0.91},
+          {"rank": 7,  "group": "G1995", "balance":  4.29, "pct": 0.89},
+          {"rank": 8,  "group": "G0002", "balance":  4.04, "pct": 0.83},
+          {"rank": 9,  "group": "G0013", "balance":  4.00, "pct": 0.83},
+          {"rank": 10, "group": "G1839", "balance":  3.83, "pct": 0.79}
+        ]
+      },
+      "mark": {"type": "bar", "cornerRadiusTopRight": 3, "cornerRadiusBottomRight": 3},
+      "encoding": {
+        "y": {
+          "field": "group",
+          "type": "ordinal",
+          "sort": {"field": "balance", "order": "descending"},
+          "axis": {"title": "Group ID", "labelFontSize": 11}
+        },
+        "x": {
+          "field": "balance",
+          "type": "quantitative",
+          "axis": {"title": "KZT Billion"}
+        },
+        "color": {
+          "field": "rank",
+          "type": "quantitative",
+          "scale": {"scheme": "blues", "reverse": true},
+          "legend": null
+        },
+        "tooltip": [
+          {"field": "rank",    "type": "quantitative", "title": "Rank"},
+          {"field": "group",   "type": "nominal",      "title": "Group"},
+          {"field": "balance", "type": "quantitative", "title": "Balance (B KZT)", "format": ".2f"},
+          {"field": "pct",     "type": "quantitative", "title": "Share (%)",       "format": ".2f"}
+        ]
+      },
+      "width": 260,
+      "height": 220
+    }
+  ]
+}

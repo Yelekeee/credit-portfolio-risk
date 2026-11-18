@@ -1,0 +1,92 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+  "description": "Portfolio distribution by industry sector",
+  "config": {
+    "font": "Inter, Arial, sans-serif",
+    "background": "#ffffff",
+    "view": {"stroke": "transparent"},
+    "axis": {"labelColor": "#374151", "titleColor": "#374151", "gridColor": "#e5e7eb"}
+  },
+  "hconcat": [
+    {
+      "title": {"text": "Sep 1, 2026 — Industry Distribution", "fontSize": 12, "fontWeight": "bold", "color": "#111827", "anchor": "start"},
+      "data": {
+        "values": [
+          {"sector": "Промышленность", "balance": 107.41, "pct": 21.56},
+          {"sector": "Строительство",  "balance": 85.09,  "pct": 17.08},
+          {"sector": "Транспорт",      "balance": 84.78,  "pct": 17.02},
+          {"sector": "АПК",            "balance": 77.21,  "pct": 15.50},
+          {"sector": "Торговля",       "balance": 73.11,  "pct": 14.68},
+          {"sector": "Услуги",         "balance": 70.56,  "pct": 14.16}
+        ]
+      },
+      "mark": {"type": "bar", "cornerRadiusTopRight": 3, "cornerRadiusBottomRight": 3},
+      "encoding": {
+        "y": {
+          "field": "sector",
+          "type": "ordinal",
+          "sort": "-x",
+          "axis": {"title": null, "labelFontSize": 11}
+        },
+        "x": {
+          "field": "balance",
+          "type": "quantitative",
+          "axis": {"title": "KZT Billion"}
+        },
+        "color": {
+          "field": "sector",
+          "type": "nominal",
+          "scale": {"scheme": "tableau10"},
+          "legend": null
+        },
+        "tooltip": [
+          {"field": "sector",  "type": "nominal",      "title": "Sector"},
+          {"field": "balance", "type": "quantitative", "title": "Balance (B KZT)", "format": ".2f"},
+          {"field": "pct",     "type": "quantitative", "title": "Share (%)",       "format": ".2f"}
+        ]
+      },
+      "width": 280,
+      "height": 180
+    },
+    {
+      "title": {"text": "Oct 1, 2026 — Industry Distribution", "fontSize": 12, "fontWeight": "bold", "color": "#111827", "anchor": "start"},
+      "data": {
+        "values": [
+          {"sector": "Промышленность", "balance": 103.59, "pct": 21.37},
+          {"sector": "Транспорт",      "balance": 84.80,  "pct": 17.50},
+          {"sector": "Строительство",  "balance": 82.46,  "pct": 17.01},
+          {"sector": "АПК",            "balance": 74.31,  "pct": 15.33},
+          {"sector": "Торговля",       "balance": 71.86,  "pct": 14.83},
+          {"sector": "Услуги",         "balance": 67.65,  "pct": 13.96}
+        ]
+      },
+      "mark": {"type": "bar", "cornerRadiusTopRight": 3, "cornerRadiusBottomRight": 3},
+      "encoding": {
+        "y": {
+          "field": "sector",
+          "type": "ordinal",
+          "sort": "-x",
+          "axis": {"title": null, "labelFontSize": 11}
+        },
+        "x": {
+          "field": "balance",
+          "type": "quantitative",
+          "axis": {"title": "KZT Billion"}
+        },
+        "color": {
+          "field": "sector",
+          "type": "nominal",
+          "scale": {"scheme": "tableau10"},
+          "legend": null
+        },
+        "tooltip": [
+          {"field": "sector",  "type": "nominal",      "title": "Sector"},
+          {"field": "balance", "type": "quantitative", "title": "Balance (B KZT)", "format": ".2f"},
+          {"field": "pct",     "type": "quantitative", "title": "Share (%)",       "format": ".2f"}
+        ]
+      },
+      "width": 280,
+      "height": 180
+    }
+  ]
+}
